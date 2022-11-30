@@ -27,57 +27,86 @@ const XLSX = require('xlsx-js-style');
     await page.goto(targetUrl);
     await page.waitForTimeout(2000);
 
-    const result = await page.evaluate(()=>{
+    const result = await page.evaluate(() => {
+        let amount = document.querySelector('.num.gao').innerText;
+        amount = `${amount}`.substring(0, amount.length - 1);
         const cityCollection = document.querySelectorAll('.height .detail-message .city');
         const cityAry = [];
         // const areaCollection = document.querySelectorAll('.height .detail-message-show .ditu');
         // const areaAry = [];
-        Array.prototype.forEach.call(cityCollection, function(city){
+
+        Array.prototype.forEach.call(cityCollection, function (city) {
             const textAry = city.innerText.split(' ');
             const childrenElements = city.parentElement.parentElement.parentElement.querySelectorAll('.ditu');
             const children = [];
-            Array.prototype.forEach.call(childrenElements, function(ch){
+            Array.prototype.forEach.call(childrenElements, function (ch) {
                 children.push(ch.innerText);
             });
             const cityObj = {
                 first: textAry[0],
-                second: textAry[1]? textAry[1]: textAry[0],
+                second: textAry[1] ? textAry[1] : textAry[0],
                 children
             }
             cityAry.push(cityObj);
         })
 
+        const headStyle = {
+            fill: {
+                fgColor: { rgb: 'F79646' }
+            }
+        }
         const xlsxData = [
-            [{v:'省份'}, {v:'市区'}, {v:'地址'}]
+            [
+                {
+                    v: '共计',
+                    s: { font: { bold: true } }
+                },
+                {
+                    v: `${amount}`,
+                    s: {
+                        font: {
+                            color: { rgb: 'FF0000' }
+                        }
+                    }
+                },
+                {
+                    v: ''
+                },
+            ],
+            [
+                { v: '省份', s: headStyle },
+                { v: '市区', s: headStyle },
+                { v: '地址', s: headStyle }
+            ]
         ];
-        const sheetOptions = {'!merges': []};
+        const sheetOptions = { '!merges': [] };
         let lastRow = 1;
-        cityAry.forEach((x, i)=>{
+        cityAry.forEach((x, i) => {
             const range1 = {
-                s: {c: 0, r: lastRow},
-                e: {c: 0, r: lastRow + x.children.length -1}
+                s: { c: 0, r: lastRow },
+                e: { c: 0, r: lastRow + x.children.length - 1 }
             };
             const range2 = {
-                s: {c: 1, r: lastRow},
-                e: {c: 1, r: lastRow + x.children.length -1}
+                s: { c: 1, r: lastRow },
+                e: { c: 1, r: lastRow + x.children.length - 1 }
             };
             const range3 = {
-                s: {c: 2, r: lastRow},
-                e: {c: 2, r: lastRow + x.children.length -1}
+                s: { c: 2, r: lastRow },
+                e: { c: 2, r: lastRow + x.children.length - 1 }
             }
-            x.children.forEach((ch, idx)=>{
+            x.children.forEach((ch, idx) => {
                 const firstV = idx == 0 ? x.first : '';
                 const secondV = idx == 0 ? x.second : '';
                 const s = i % 2 === 0 ? {
                     fill: {
-                        fgColor: { rgb: 'F7C709' },
+                        fgColor: { rgb: 'FDE9D9' },
                     },
                     alignment: { vertical: 'top' }
                 } : null;
                 const tmp = [
-                    {v: firstV, s},
-                    {v: secondV, s},
-                    {v: ch, s}
+                    { v: firstV, s },
+                    { v: secondV, s },
+                    { v: ch, s }
                 ];
                 xlsxData.push(tmp);
             })
@@ -87,13 +116,14 @@ const XLSX = require('xlsx-js-style');
 
             // lastRow += (x.children.length + 1);
             //空行
-            xlsxData.push([]);
+            // xlsxData.push([]);
         })
 
-        return {xlsxData, sheetOptions};
+        return { xlsxData, sheetOptions };
     });
+
     const worksheet = XLSX.utils.aoa_to_sheet(result.xlsxData);
- 
+    
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "高风险");
     XLSX.writeFile(workbook, "疫情地区.xlsx", { compression: true });
