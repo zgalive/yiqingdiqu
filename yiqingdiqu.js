@@ -126,7 +126,9 @@ const XLSX = require('xlsx-js-style');
     
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "高风险");
-    XLSX.writeFile(workbook, "疫情地区.xlsx", { compression: true });
+    const currentDay = new Date();
+    const fileName = `全国疫情中高风险地区名单（更新至${currentDay.getFullYear()}.${currentDay.getMonth()+1}.${currentDay.getDate()}.xlsx`;
+    XLSX.writeFile(workbook, fileName, { compression: true });
 
     // fs.writeFileSync('疫情地区.xlsx', buffertmp);
 
