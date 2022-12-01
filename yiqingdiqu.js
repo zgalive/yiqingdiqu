@@ -80,7 +80,7 @@ const XLSX = require('xlsx-js-style');
             ]
         ];
         const sheetOptions = { '!merges': [] };
-        let lastRow = 1;
+        let lastRow = 2;
         cityAry.forEach((x, i) => {
             const range1 = {
                 s: { c: 0, r: lastRow },
@@ -97,12 +97,36 @@ const XLSX = require('xlsx-js-style');
             x.children.forEach((ch, idx) => {
                 const firstV = idx == 0 ? x.first : '';
                 const secondV = idx == 0 ? x.second : '';
+                const borderSetting = {
+                    style: 'medium',
+                    color: { rgb: '000000' }
+                };
+                const commonSetting = {
+                    alignment: { vertical: 'top', horizontal: 'top' },
+                    border: {
+                        top: {
+                            ...borderSetting
+                        },
+                        left: {
+                            ...borderSetting
+                        },
+                        right: {
+                            ...borderSetting
+                        },
+                        bottom: {
+                            ...borderSetting
+                        }
+
+                    }
+                };
                 const s = i % 2 === 0 ? {
                     fill: {
                         fgColor: { rgb: 'FDE9D9' },
                     },
-                    alignment: { vertical: 'top' }
-                } : null;
+                    ...commonSetting  
+                } : {
+                    ...commonSetting
+                };
                 const tmp = [
                     { v: firstV, s },
                     { v: secondV, s },
@@ -110,11 +134,11 @@ const XLSX = require('xlsx-js-style');
                 ];
                 xlsxData.push(tmp);
             })
-            // sheetOptions['!merges'].push(range1);
-            // sheetOptions['!merges'].push(range2);
+            sheetOptions['!merges'].push(range1);
+            sheetOptions['!merges'].push(range2);
             // sheetOptions['!merges'].push(range3);
 
-            // lastRow += (x.children.length + 1);
+            lastRow += (x.children.length);
             //空行
             // xlsxData.push([]);
         })
@@ -123,14 +147,15 @@ const XLSX = require('xlsx-js-style');
     });
 
     const worksheet = XLSX.utils.aoa_to_sheet(result.xlsxData);
+    worksheet['!merges'] = result.sheetOptions['!merges'];
     
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "高风险");
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([]), "中风险");
+
     const currentDay = new Date();
     const fileName = `全国疫情中高风险地区名单（更新至${currentDay.getFullYear()}.${currentDay.getMonth()+1}.${currentDay.getDate()}.xlsx`;
     XLSX.writeFile(workbook, fileName, { compression: true });
-
-    // fs.writeFileSync('疫情地区.xlsx', buffertmp);
 
     browser.close();
 })();
